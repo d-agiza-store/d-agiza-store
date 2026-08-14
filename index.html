@@ -31,10 +31,12 @@ function show(id){
 }
 function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('show')}function closeModal(){modal.classList.remove('show')}
 function openPOModal(){openModal('Buat PO Baru',`<label>Nama PO</label><input id="poName" placeholder="PO Agustus 1"><label>Tanggal buka</label><input id="poOpen" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Catatan</label><textarea id="poNotes"></textarea><button class="full" onclick="savePO()">Simpan PO</button>`)}
-async function deletePO(id){
-  const po=D.po.find(x=>x.uuid===id);
-  if(!po){alert('PO tidak ditemukan di aplikasi.');return;}
-  if(!confirm('Hapus PO "'+po.name+'"?\\n\\nData yang sudah dihapus tidak bisa dikembalikan.')) return;
+async function deletePO(id,name){
+  if(!id){
+    alert('ID PO tidak ditemukan.');
+    return;
+  }
+  if(!confirm('Hapus PO "'+name+'"?\\n\\nData yang sudah dihapus tidak bisa dikembalikan.')) return;
   try{
     await api('purchase_orders','DELETE',null,'?uuid=eq.'+encodeURIComponent(id));
     await load();
@@ -81,7 +83,7 @@ function render(){
   if(window.lastPOReadError){
     poList.innerHTML='<div class="card error"><b>PO belum bisa dibaca.</b><br>'+esc(window.lastPOReadError)+'</div>';
   }else{
-    poList.innerHTML=D.po.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name)}</b> <span class="pill">${esc(x.status)}</span></div><button class="danger" style="padding:8px 10px;font-size:12px;flex:0 0 auto" onclick="deletePO('${x.uuid}')">Hapus</button></div><span class="small">Buka: ${x.open_date||'-'} • Tutup: ${x.close_date||'-'}</span>${x.notes?`<br><span class="small">${esc(x.notes)}</span>`:''}</div>`).join('')||'<div class="card small">Belum ada PO untuk akun ini.</div>';
+    poList.innerHTML=D.po.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name)}</b> <span class="pill">${esc(x.status)}</span></div><button class="danger" style="padding:8px 10px;font-size:12px;flex:0 0 auto" onclick="deletePO('${x.uuid||x.id||''}','${esc(x.name)}')">Hapus</button></div><span class="small">Buka: ${x.open_date||'-'} • Tutup: ${x.close_date||'-'}</span>${x.notes?`<br><span class="small">${esc(x.notes)}</span>`:''}</div>`).join('')||'<div class="card small">Belum ada PO untuk akun ini.</div>';
   }
 
   productList.innerHTML=D.products.map(x=>`<div class="item"><b>${esc(x.name)}</b><br><span class="small">${esc(x.size||'-')} • ${esc(x.color||'-')} • ${esc(x.variant_type||'-')}<br>Harga jual <b>Rp${fmt(x.selling_price)}</b></span></div>`).join('')||'<div class="card small">Belum ada barang.</div>';
