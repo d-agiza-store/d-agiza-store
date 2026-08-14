@@ -11,7 +11,11 @@
 <script>
 const URL="https://jghusevnsvinuzfjkqmk.supabase.co",KEY="sb_publishable_XQ3SRiit7Hrax-iC5DWdzg_2BCMgVKQ";let session=JSON.parse(localStorage.getItem('dagiza_session')||'null'),D={po:[],products:[],customers:[],orders:[],items:[]};
 const H=()=>({apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=representation'});
-async function api(t,m='GET',b=null,q=''){let r=await fetch(URL+'/rest/v1/'+t+q,{method:m,headers:H(),body:b?JSON.stringify(b):undefined}),x=await r.text(),j=x?JSON.parse(x):null;if(!r.ok)throw Error(j?.message||j?.hint||x||'Gagal');return j}
+async function refreshSession(){
+ if(!session?.refresh_token)return false;
+ try{const r=await fetch(URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});const j=await r.json();if(!r.ok)return false;session={...session,...j};localStorage.setItem('dagiza_session',JSON.stringify(session));return true}catch(e){return false}
+}
+async function api(t,m='GET',b=null,q='',retried=false){let r=await fetch(URL+'/rest/v1/'+t+q,{method:m,headers:H(),body:b?JSON.stringify(b):undefined});if(r.status===401&&!retried){const ok=await refreshSession();if(ok)return api(t,m,b,q,true);localStorage.removeItem('dagiza_session');session=null;throw Error('Sesi login sudah habis. Silakan login kembali.')}const x=await r.text(),j=x?JSON.parse(x):null;if(!r.ok)throw Error(j?.message||j?.hint||x||'Gagal');return j}
 function isRecovery(){return /type=recovery/.test(window.location.hash||"")}
 function getRecoveryAccessToken(){return new URLSearchParams((window.location.hash||"").replace(/^#/,"")).get("access_token")||""}
 function showReset(){document.getElementById("resetPanel").classList.remove("hidden");document.getElementById("authTitle").textContent="Reset Password";document.querySelector('#auth button[onclick="login()"]').classList.add("hidden");document.querySelector('#auth button[onclick="signup()"]').classList.add("hidden")}
