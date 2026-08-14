@@ -31,6 +31,42 @@ function show(id){
 }
 function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('show')}function closeModal(){modal.classList.remove('show')}
 function openPOModal(){openModal('Buat PO Baru',`<label>Nama PO</label><input id="poName" placeholder="PO Agustus 1"><label>Tanggal buka</label><input id="poOpen" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Catatan</label><textarea id="poNotes"></textarea><button class="full" onclick="savePO()">Simpan PO</button>`)}
+function editPO(id){
+  const po=D.po.find(x=>(x.id||x.uuid)===id);
+  if(!po){alert('PO tidak ditemukan.');return;}
+  openModal('Edit PO',`<label>Nama PO</label>
+<input id="editPOName" value="${esc(po.name||'')}">
+<label>Tanggal buka</label>
+<input id="editPOOpen" type="date" value="${po.open_date||''}">
+<label>Tanggal tutup</label>
+<input id="editPOClose" type="date" value="${po.close_date||''}">
+<label>Status</label>
+<select id="editPOStatus">
+<option value="open" ${String(po.status||'').toLowerCase()==='open'?'selected':''}>Open</option>
+<option value="closed" ${String(po.status||'').toLowerCase()==='closed'?'selected':''}>Closed</option>
+</select>
+<label>Catatan</label>
+<textarea id="editPONotes">${esc(po.notes||'')}</textarea>
+<button class="full" onclick="savePOEdit('${id}')">Simpan Perubahan</button>`);
+}
+async function savePOEdit(id){
+  try{
+    await api('purchase_orders','PATCH',{
+      name:document.getElementById('editPOName').value.trim(),
+      open_date:document.getElementById('editPOOpen').value||null,
+      close_date:document.getElementById('editPOClose').value||null,
+      status:document.getElementById('editPOStatus').value,
+      notes:document.getElementById('editPONotes').value
+    },'?id=eq.'+encodeURIComponent(id));
+    closeModal();
+    await load();
+    show('po');
+    alert('PO berhasil diperbarui');
+  }catch(e){
+    alert('Gagal memperbarui PO: '+(e.message||String(e)));
+    console.error(e);
+  }
+}
 async function deletePO(id,name){
   if(!id){
     alert('ID PO tidak ditemukan.');
@@ -83,7 +119,7 @@ function render(){
   if(window.lastPOReadError){
     poList.innerHTML='<div class="card error"><b>PO belum bisa dibaca.</b><br>'+esc(window.lastPOReadError)+'</div>';
   }else{
-    poList.innerHTML=D.po.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name)}</b> <span class="pill">${esc(x.status)}</span></div><button class="danger" style="padding:8px 10px;font-size:12px;flex:0 0 auto" onclick="deletePO('${x.uuid||x.id||''}','${esc(x.name)}')">Hapus</button></div><span class="small">Buka: ${x.open_date||'-'} • Tutup: ${x.close_date||'-'}</span>${x.notes?`<br><span class="small">${esc(x.notes)}</span>`:''}</div>`).join('')||'<div class="card small">Belum ada PO untuk akun ini.</div>';
+    poList.innerHTML=D.po.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name)}</b> <span class="pill">${esc(x.status)}</span></div><div style="display:flex;gap:6px;flex:0 0 auto"><button style="padding:8px 10px;font-size:12px" onclick="editPO('${x.id||x.uuid||''}')">Edit</button><button class="danger" style="padding:8px 10px;font-size:12px" onclick="deletePO('${x.id||x.uuid||''}','${esc(x.name)}')">Hapus</button></div></div><span class="small">Buka: ${x.open_date||'-'} • Tutup: ${x.close_date||'-'}</span>${x.notes?`<br><span class="small">${esc(x.notes)}</span>`:''}</div>`).join('')||'<div class="card small">Belum ada PO untuk akun ini.</div>';
   }
 
   productList.innerHTML=D.products.map(x=>`<div class="item"><b>${esc(x.name)}</b><br><span class="small">${esc(x.size||'-')} • ${esc(x.color||'-')} • ${esc(x.variant_type||'-')}<br>Harga jual <b>Rp${fmt(x.selling_price)}</b></span></div>`).join('')||'<div class="card small">Belum ada barang.</div>';
