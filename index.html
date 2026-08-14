@@ -49,7 +49,7 @@ if(!session)return;
 D.po=[];D.products=[];D.customers=[];D.orders=[];D.items=[];window.lastPOReadError='';
 const read=async(t)=>{
   try{
-    return await api(t,'','','?select=*&order=created_at.desc');
+    return await api(t,'GET',null,'?select=*&order=created_at.desc');
   }catch(e){
     console.error('Gagal membaca '+t,e);
     if(t==='purchase_orders'){
