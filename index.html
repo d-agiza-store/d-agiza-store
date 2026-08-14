@@ -38,7 +38,7 @@ async function deletePO(id,name){
   }
   if(!confirm('Hapus PO "'+name+'"?\\n\\nData yang sudah dihapus tidak bisa dikembalikan.')) return;
   try{
-    await api('purchase_orders','DELETE',null,'?uuid=eq.'+encodeURIComponent(id));
+    await api('purchase_orders','DELETE',null,'?id=eq.'+encodeURIComponent(id));
     await load();
     alert('PO berhasil dihapus.');
   }catch(e){
