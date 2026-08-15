@@ -30,59 +30,29 @@ function show(id){
   if(session)load();
 }
 function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('show')}function closeModal(){modal.classList.remove('show')}
-function openPOModal(){openModal('Buat PO Baru',`<label>Nama PO</label><input id="poName" placeholder="PO Agustus 1"><label>Tanggal buka</label><input id="poOpen" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Catatan</label><textarea id="poNotes"></textarea><button class="full" onclick="savePO()">Simpan PO</button>`)}
-function editPO(id){
-  const po=D.po.find(x=>(x.id||x.uuid)===id);
-  if(!po){alert('PO tidak ditemukan.');return;}
-  openModal('Edit PO',`<label>Nama PO</label>
-<input id="editPOName" value="${esc(po.name||'')}">
-<label>Tanggal buka</label>
-<input id="editPOOpen" type="date" value="${po.open_date||''}">
-<label>Tanggal tutup</label>
-<input id="editPOClose" type="date" value="${po.close_date||''}">
-<label>Status</label>
-<select id="editPOStatus">
-<option value="open" ${String(po.status||'').toLowerCase()==='open'?'selected':''}>Open</option>
-<option value="closed" ${String(po.status||'').toLowerCase()==='closed'?'selected':''}>Closed</option>
-</select>
-<label>Catatan</label>
-<textarea id="editPONotes">${esc(po.notes||'')}</textarea>
-<button class="full" onclick="savePOEdit('${id}')">Simpan Perubahan</button>`);
+function openPOModal(){
+  openModal('Buat PO Baru',`<label>Nama PO</label><input id="poName" placeholder="Contoh: PO Agustus">
+  <div class="row"><div><label>Open Date</label><input id="poOpen" type="date"></div>
+  <div><label>Close Date</label><input id="poClose" type="date"></div></div>
+  <label>Status</label><select id="poStatus"><option value="open" selected>Open</option><option value="closed">Closed</option></select>
+  <label>Notes / Catatan</label><textarea id="poNotes" placeholder="Catatan PO (opsional)"></textarea>
+  <button class="full" onclick="savePO()">Simpan PO</button>`);
 }
-async function savePOEdit(id){
+async function savePO(){
   try{
-    await api('purchase_orders','PATCH',{
-      name:document.getElementById('editPOName').value.trim(),
-      open_date:document.getElementById('editPOOpen').value||null,
-      close_date:document.getElementById('editPOClose').value||null,
-      status:document.getElementById('editPOStatus').value,
-      notes:document.getElementById('editPONotes').value
-    },'?id=eq.'+encodeURIComponent(id));
-    closeModal();
-    await load();
-    show('po');
-    alert('PO berhasil diperbarui');
-  }catch(e){
-    alert('Gagal memperbarui PO: '+(e.message||String(e)));
-    console.error(e);
-  }
+    const name=document.getElementById('poName').value.trim();
+    if(!name){alert('Nama PO wajib diisi.');return;}
+    await api('purchase_orders','POST',{
+      user_id:session.user.id,
+      name:name,
+      open_date:document.getElementById('poOpen').value||null,
+      close_date:document.getElementById('poClose').value||null,
+      status:document.getElementById('poStatus').value,
+      notes:document.getElementById('poNotes').value.trim()
+    });
+    closeModal(); await load(); show('po'); alert('PO berhasil dibuat');
+  }catch(e){alert('Gagal membuat PO: '+(e.message||String(e)));console.error(e);}
 }
-async function deletePO(id,name){
-  if(!id){
-    alert('ID PO tidak ditemukan.');
-    return;
-  }
-  if(!confirm('Hapus PO "'+name+'"?\\n\\nData yang sudah dihapus tidak bisa dikembalikan.')) return;
-  try{
-    await api('purchase_orders','DELETE',null,'?id=eq.'+encodeURIComponent(id));
-    await load();
-    alert('PO berhasil dihapus.');
-  }catch(e){
-    alert('Gagal menghapus PO: '+(e.message||String(e)));
-    console.error(e);
-  }
-}
-async function savePO(){try{await api('purchase_orders','POST',{user_id:session.user.id,name:poName.value,open_date:poOpen.value,status:'open',notes:poNotes.value});closeModal();await load();show('po');alert('PO berhasil dibuat')}catch(e){alert(e.message)}}
 function openProductModal(){let p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');if(!p.length)return alert('Buat Open PO dulu.');openModal('Tambah Barang',`<label>PO</label><select id="pPO">${p.map(x=>`<option value="${x.uuid}">${esc(x.name)}</option>`).join('')}</select><label>Nama barang</label><input id="pName"><div class="row"><div><label>Ukuran</label><input id="pSize"></div><div><label>Warna</label><input id="pColor"></div></div><label>Varian / Jenis</label><input id="pVariant"><label>Harga beli / supplier</label><input id="pCost" type="number" oninput="calc()"><div class="row"><div><label>Operasional %</label><input id="pOp" type="number" value="5" oninput="calc()"></div><div><label>Profit %</label><input id="pProfit" type="number" value="20" oninput="calc()"></div></div><label>Harga jual otomatis</label><input id="pSell" readonly><label>Catatan</label><textarea id="pNotes"></textarea><button class="full" onclick="saveProduct()">Simpan Barang</button>`);pCost.addEventListener('input',calc);calc()}
 function calc(){let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0;pSell.value=Math.round(c/(1-(o+p)/100)||0)}
 async function saveProduct(){try{let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0,s=Math.round(c/(1-(o+p)/100)||0);await api('products','POST',{user_id:session.user.id,po_id:pPO.value,name:pName.value,size:pSize.value,color:pColor.value,variant_type:pVariant.value,suppilier_cost:c,operational_percent:o,profit_percent:p,selling_price:s,notes:pNotes.value});closeModal();await load();show('products');alert('Barang tersimpan dan otomatis tersedia di Order')}catch(e){alert(e.message)}}
