@@ -40,6 +40,15 @@ nav button span, .bottom-nav button span, #bottomNav button span{display:block!i
 <style id="customer-add-fix">
 #customers .head{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:10px!important}
 #customers #btnAddCustomer{display:inline-flex!important;visibility:visible!important;opacity:1!important;flex:0 0 auto!important;width:auto!important;min-width:130px!important;justify-content:center!important}
+</style><style id="customer-layout-final">
+#customers.screen{display:none!important;padding:0 16px!important;min-height:0!important}
+#customers.screen.active{display:block!important}
+.customer-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:4px 0 12px!important}
+.customer-head h2{margin:0!important;font-size:24px!important}
+#btnAddCustomer{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;min-width:150px!important;white-space:nowrap!important}
+#customerList{display:block!important;width:100%!important}
+</style><style id="screen-layout-final">
+.screen{min-height:0!important}
 </style></head><body>
 <div id="auth" class="auth"><div class="card"><div class="brand">d’Agiza Store</div><p class="sub">PO & Order Management</p><h2>Masuk</h2><label>Email</label><input id="email" type="email"><label>Password</label><input id="password" type="password"><button class="full" onclick="login()">Masuk</button><button class="secondary full" style="margin-top:8px" onclick="signup()">Buat akun</button><div id="authMsg"></div><div id="resetPanel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"><h3 style="margin:0 0 6px">Buat Password Baru</h3><p class="small">Masukkan password baru untuk akun d’Agiza Store.</p><label>Password baru</label><input id="newPassword" type="password" placeholder="Minimal 6 karakter"><label>Ulangi password</label><input id="newPassword2" type="password" placeholder="Ulangi password"><button class="full" onclick="updatePassword()">Simpan Password Baru</button><button class="secondary full" style="margin-top:8px" onclick="hideReset()">Kembali ke Login</button><div id="resetMsg"></div></div></div></div>
 <div id="app" class="app hidden"><div class="top"><div class="brand">d’Agiza Store</div><div class="sub">PO & Order Management</div></div>
@@ -47,6 +56,16 @@ nav button span, .bottom-nav button span, #bottomNav button span{display:block!i
 <section id="po" class="screen"><div class="row"><h2>Open PO</h2><div class="row"><button class="secondary" onclick="load()">↻</button><button onclick="openPOModal()">＋ PO</button></div></div><div id="poList" class="list"></div></section>
 <section id="products" class="screen"><div class="row"><h2>Barang</h2><button onclick="openProductModal()">＋ Barang</button></div><div id="productList" class="list"></div></section>
 <section id="orders" class="screen"><div class="row"><h2>Order</h2><button onclick="openOrderModal()">＋ Order</button></div><div id="orderList" class="list"></div></section>
+<section id="customers" class="screen">
+  <div class="head">
+    <div>
+      <h2>Customer</h2>
+      <div class="small">Daftar customer</div>
+    </div>
+    <button class="primary" type="button" id="btnAddCustomer" onclick="openCustomerModal()">＋ Tambah Customer</button>
+  </div>
+  <div id="customerList"><div class="card small">Belum ada customer.</div></div>
+</section>
 <section id="settings" class="screen"><h2>Pengaturan</h2><div class="card"><p class="small">Akun</p><b id="userEmail"></b><button class="danger full" style="margin-top:15px" onclick="logout()">Keluar</button></div></section></div>
 <div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('customers')" id="nav-customers">👤<br>Customer</button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
 <div id="modal" class="modal"><div class="sheet"><div class="row"><h2 id="modalTitle">Tambah</h2><button class="secondary" onclick="closeModal()">Tutup</button></div><div id="modalBody"></div></div></div>
@@ -566,13 +585,4 @@ function render(){
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function fmt(n){return Number(n||0).toLocaleString('id-ID')}async function start(){auth.classList.add('hidden');app.classList.remove('hidden');userEmail.textContent=session.user?.email||'';await load()}if(isRecovery()&&getRecoveryAccessToken()){document.getElementById("auth").classList.remove("hidden");document.getElementById("app").classList.add("hidden");showReset()}else if(session?.access_token)start();
-</script></body></html><section id="customers" class="screen">
-  <div class="head">
-    <div>
-      <h2>Customer</h2>
-      <div class="small">Daftar customer</div>
-    </div>
-    <button class="primary" type="button" id="btnAddCustomer" onclick="openCustomerModal()">＋ Tambah Customer</button>
-  </div>
-  <div id="customerList"><div class="card small">Belum ada customer.</div></div>
-</section>
+</script></body></html>
