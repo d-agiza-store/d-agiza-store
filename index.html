@@ -366,7 +366,7 @@ function renderCustomers(){
 }
 function openCustomerModal(id){
   const c=id?(D.customers||[]).find(x=>String(x.id)===String(id)):null;
-  openModal(c?'Edit Customer':'Tambah Customer',`<label>Nama customer</label><input id="cName" value="${esc(c?.name||'')}" placeholder="Nama customer"><label>WhatsApp</label><input id="cWA" value="${esc(c?.whatsapp||c?.phone||'')}" placeholder="08xxxxxxxxxx"><label>Alamat</label><textarea id="cAddress" placeholder="Alamat (opsional)">${esc(c?.address||'')}</textarea><button class="full" onclick="${c?`saveCustomerEdit('${c.id}')`:'saveCustomer()'}">${c?'Simpan Perubahan':'Simpan Customer'}</button>`);
+  openModal(c?'Edit Customer':'Tambah Customer',`<label>Nama customer</label><input id="cName" value="${esc(c?.name||'')}" placeholder="Nama customer"><label>WhatsApp</label><input id="cWA" value="${esc(c?.whatsapp||c?.phone||'')}" placeholder="08xxxxxxxxxx"><button class="full" onclick="${c?`saveCustomerEdit('${c.id}')`:'saveCustomer()'}">${c?'Simpan Perubahan':'Simpan Customer'}</button>`);
 }
 function editCustomer(id){openCustomerModal(id)}
 async function saveCustomer(){
@@ -396,8 +396,9 @@ function openOrderModal(){
     <label>PO</label>
     <select id="oPO" onchange="fillP()">${p.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
 
-    <label>Nama customer</label><input id="oCust" placeholder="Nama customer">
-    <label>WhatsApp</label><input id="oWA" placeholder="08xxxxxxxxxx">
+    <label>Customer</label>
+    <select id="oCust" onchange="fillCustomerOrder()"></select>
+    <label>WhatsApp</label><input id="oWA" placeholder="08xxxxxxxxxx" readonly>
     <label>Tanggal order</label><input id="oDate" type="date" value="${new Date().toISOString().slice(0,10)}">
 
     <label>Barang</label>
@@ -418,7 +419,21 @@ function openOrderModal(){
     <button class="full" type="button" onclick="saveOrder()">Simpan Order</button>
   `);
 
+  fillCustomersOrder();
   fillP();
+}
+
+function fillCustomersOrder(){
+  const rows=D.customers||[];
+  oCust.innerHTML=rows.length
+    ? '<option value="">Pilih customer</option>'+rows.map(c=>`<option value="${c.id}">${esc(c.name)}${c.whatsapp||c.phone?' — '+esc(c.whatsapp||c.phone):''}</option>`).join('')
+    : '<option value="">Belum ada customer</option>';
+  fillCustomerOrder();
+}
+
+function fillCustomerOrder(){
+  const c=(D.customers||[]).find(x=>String(x.id)===String(oCust.value));
+  oWA.value=c?.whatsapp||c?.phone||'';
 }
 
 function selectedProduct(){
@@ -476,22 +491,13 @@ async function saveOrder(){
     const p=selectedProduct();
     if(!p)throw Error('Pilih barang terlebih dahulu.');
 
-    const custName=oCust.value.trim();
-    if(!custName)throw Error('Nama customer wajib diisi.');
+    const customerId=oCust.value;
+    if(!customerId)throw Error('Pilih customer terlebih dahulu.');
 
     const qty=+oQty.value||0;
     if(qty<1)throw Error('Qty minimal 1.');
 
-    const customer=await api('customers','POST',{
-      user_id:session.user.id,
-      name:custName,
-      whatsapp:oWA.value.trim()
-    });
-
-    const customerId=Array.isArray(customer)?customer[0]?.id:customer?.id;
-    if(!customerId)throw Error('Customer gagal dibuat.');
-
-    const order=await api('orders','POST',{
+    await api('orders','POST',{
       user_id:session.user.id,
       customer_id:customerId,
       po_id:oPO.value,
