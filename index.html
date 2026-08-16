@@ -65,6 +65,8 @@ main, .content, .app-content, #app, body{
   -webkit-overflow-scrolling:touch!important;
   max-height:calc(100vh - 120px)!important;
 }
+</style><style id="order-save-final-scroll">
+#orders, #order, .order-form{padding-bottom:120px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
 </style></head><body>
 <div id="auth" class="auth"><div class="card"><div class="brand">d’Agiza Store</div><p class="sub">PO & Order Management</p><h2>Masuk</h2><label>Email</label><input id="email" type="email"><label>Password</label><input id="password" type="password"><button class="full" onclick="login()">Masuk</button><button class="secondary full" style="margin-top:8px" onclick="signup()">Buat akun</button><div id="authMsg"></div><div id="resetPanel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"><h3 style="margin:0 0 6px">Buat Password Baru</h3><p class="small">Masukkan password baru untuk akun d’Agiza Store.</p><label>Password baru</label><input id="newPassword" type="password" placeholder="Minimal 6 karakter"><label>Ulangi password</label><input id="newPassword2" type="password" placeholder="Ulangi password"><button class="full" onclick="updatePassword()">Simpan Password Baru</button><button class="secondary full" style="margin-top:8px" onclick="hideReset()">Kembali ke Login</button><div id="resetMsg"></div></div></div></div>
 <div id="app" class="app hidden"><div class="top"><div class="brand">d’Agiza Store</div><div class="sub">PO & Order Management</div></div>
@@ -404,6 +406,32 @@ async function deleteCustomer(id,name){
   try{await api('customers','DELETE',null,'?id=eq.'+encodeURIComponent(id));await load();show('customers');alert('Customer berhasil dihapus');}
   catch(e){alert('Gagal menghapus customer: '+(e.message||e));}
 }
+
+async function generateOrderNumber(){
+  const d=new Date();
+  const months=['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
+  const pad=n=>String(n).padStart(2,'0');
+  const yy=String(d.getFullYear()).slice(-2);
+  const mm=pad(d.getMonth()+1);
+  const dd=pad(d.getDate());
+  const prefix=months[d.getMonth()];
+  const datePart=yy+mm+dd;
+
+  // Get existing order numbers for this month and continue from the highest sequence.
+  const start=yy+mm;
+  const end=yy+pad(d.getMonth()+1);
+  let maxSeq=0;
+  try{
+    const rows=await api('orders','GET','?select=order_number&order_number=like.'+encodeURIComponent(prefix+'-'+start+'%-')+'&order=order_number.desc&limit=1000');
+    (rows||[]).forEach(r=>{
+      const n=String(r.order_number||'').match(/-(\d{3})$/);
+      if(n) maxSeq=Math.max(maxSeq,Number(n[1]));
+    });
+  }catch(e){
+    console.warn('Tidak bisa membaca urutan order, mulai dari 001:',e);
+  }
+  return prefix+'-'+datePart+'-'+String(maxSeq+1).padStart(3,'0');
+}
 function openOrderModal(){
   const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
   if(!p.length)return alert('Buat Open PO dulu.');
@@ -513,7 +541,7 @@ async function saveOrder(){
     const qty=+oQty.value||0;
     if(qty<1)throw Error('Qty minimal 1.');
 
-    await api('orders','POST',{
+    await api('orders','POST',{order_number:await generateOrderNumber(),
       user_id:session.user.id,
       customer_id:customerId,
       po_id:oPO.value,
