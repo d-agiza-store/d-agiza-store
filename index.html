@@ -102,7 +102,78 @@ async function savePO(){
     closeModal(); await load(); show('po'); alert('PO berhasil dibuat');
   }catch(e){alert('Gagal membuat PO: '+(e.message||String(e)));console.error(e);}
 }
-function openProductModal(){let p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');if(!p.length)return alert('Buat Open PO dulu.');openModal('Tambah Barang',`<label>PO</label><select id="pPO">${p.map(x=>`<option value="${x.uuid}">${esc(x.name)}</option>`).join('')}</select><label>Nama barang</label><input id="pName"><div class="row"><div><label>Ukuran</label><input id="pSize"></div><div><label>Warna</label><input id="pColor"></div></div><label>Varian / Jenis</label><input id="pVariant"><label>Harga beli / supplier</label><input id="pCost" type="number" oninput="calc()"><div class="row"><div><label>Operasional %</label><input id="pOp" type="number" value="5" oninput="calc()"></div><div><label>Profit %</label><input id="pProfit" type="number" value="20" oninput="calc()"></div></div><label>Harga jual otomatis</label><input id="pSell" readonly><label>Catatan</label><textarea id="pNotes"></textarea><button class="full" onclick="saveProduct()">Simpan Barang</button>`);pCost.addEventListener('input',calc);calc()}
+function openProductModal(){
+  const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
+  if(!p.length)return alert('Buat Open PO dulu.');
+  openModal('Tambah Barang',`
+    <label>PO</label>
+    <select id="pPO">${p.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
+
+    <label>Nama barang</label>
+    <input id="pName" placeholder="Contoh: Dress Linen">
+
+    <div class="row">
+      <div><label>Ukuran</label><input id="pSize" placeholder="S / M / L"></div>
+      <div><label>Warna</label><input id="pColor" placeholder="Warna"></div>
+    </div>
+
+    <label>Varian / Jenis</label>
+    <input id="pVariant" placeholder="Contoh: Premium">
+
+    <label>Harga beli / supplier</label>
+    <input id="pCost" type="number" min="0" oninput="calc()">
+
+    <div class="row">
+      <div><label>Operasional %</label><input id="pOp" type="number" min="0" value="5" oninput="calc()"></div>
+      <div><label>Profit %</label><input id="pProfit" type="number" min="0" value="20" oninput="calc()"></div>
+    </div>
+
+    <label>Harga jual otomatis</label>
+    <input id="pSell" readonly>
+
+    <label>Catatan</label>
+    <textarea id="pNotes" placeholder="Catatan barang (opsional)"></textarea>
+
+    <button class="full" type="button" onclick="saveProduct()">Simpan Barang</button>
+  `);
+  calc();
+}
+
+async function saveProduct(){
+  try{
+    const name=document.getElementById('pName').value.trim();
+    const poId=document.getElementById('pPO').value;
+    if(!name){alert('Nama barang wajib diisi.');return;}
+    if(!poId){alert('Pilih PO terlebih dahulu.');return;}
+
+    const cost=+document.getElementById('pCost').value||0;
+    const op=+document.getElementById('pOp').value||0;
+    const profit=+document.getElementById('pProfit').value||0;
+    const sell=Math.round(cost/(1-(op+profit)/100)||0);
+
+    await api('products','POST',{
+      user_id:session.user.id,
+      po_id:poId,
+      name:name,
+      size:document.getElementById('pSize').value.trim(),
+      color:document.getElementById('pColor').value.trim(),
+      variant_type:document.getElementById('pVariant').value.trim(),
+      cost_price:cost,
+      operational_percent:op,
+      profit_percent:profit,
+      selling_price:sell,
+      notes:document.getElementById('pNotes').value.trim()
+    });
+
+    closeModal();
+    await load();
+    show('products');
+    alert('Barang berhasil dibuat');
+  }catch(e){
+    alert('Gagal membuat barang: '+(e.message||String(e)));
+    console.error(e);
+  }
+}
 function calc(){let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0;pSell.value=Math.round(c/(1-(o+p)/100)||0)}
 async function saveProduct(){try{let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0,s=Math.round(c/(1-(o+p)/100)||0);await api('products','POST',{user_id:session.user.id,po_id:pPO.value,name:pName.value,size:pSize.value,color:pColor.value,variant_type:pVariant.value,suppilier_cost:c,operational_percent:o,profit_percent:p,selling_price:s,notes:pNotes.value});closeModal();await load();show('products');alert('Barang tersimpan dan otomatis tersedia di Order')}catch(e){alert(e.message)}}
 function openOrderModal(){let p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');if(!p.length)return alert('Buat Open PO dulu.');openModal('Order Customer',`<label>PO</label><select id="oPO" onchange="fillP()">${p.map(x=>`<option value="${x.uuid}">${esc(x.name)}</option>`).join('')}</select><label>Nama customer</label><input id="oCust"><label>WhatsApp</label><input id="oWA"><label>Tanggal order</label><input id="oDate" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Barang</label><select id="oProduct"></select><div id="dBox"></div><label>Qty</label><input id="oQty" type="number" value="1" min="1"><button class="full" onclick="saveOrder()">Simpan Order</button>`);fillP()}
