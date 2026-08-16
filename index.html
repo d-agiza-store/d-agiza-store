@@ -546,7 +546,7 @@ async function saveOrder(){
       customer_id:customerId,
       po_id:oPO.value,
       order_date:oDate.value,
-      payment_status:'pending'
+      payment_status:'unpaid'
     });
 
     await api('items','POST',{
