@@ -549,7 +549,7 @@ async function saveOrder(){
       payment_status:'unpaid'
     });
 
-    await api('items','POST',{
+    await api('order_items','POST',{
       user_id:session.user.id,
       customer_id:customerId,
       po_id:oPO.value,
