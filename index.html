@@ -295,35 +295,139 @@ function calc(){
   pSell.value=Math.ceil(raw/1000)*1000;
 }
 async function saveProduct(){try{let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0,raw=c/(1-(o+p)/100)||0,s=Math.ceil(raw/1000)*1000;await api('products','POST',{user_id:session.user.id,po_id:pPO.value,name:pName.value,size:pSize.value,color:pColor.value,variant_type:pVariant.value,supplier_cost:c,operational_percent:o,profit_percent:p,selling_price:s,notes:pNotes.value});closeModal();await load();show('products');alert('Barang tersimpan dan otomatis tersedia di Order')}catch(e){alert(e.message)}}
-function openOrderModal(){let p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');if(!p.length)return alert('Buat Open PO dulu.');openModal('Order Customer',`<label>PO</label><select id="oPO" onchange="fillP()">${p.map(x=>`<option value="${x.uuid}">${esc(x.name)}</option>`).join('')}</select><label>Nama customer</label><input id="oCust"><label>WhatsApp</label><input id="oWA"><label>Tanggal order</label><input id="oDate" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Barang</label><select id="oProduct" onchange="fillOptions()"></select>
+function openOrderModal(){
+  const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
+  if(!p.length)return alert('Buat Open PO dulu.');
+
+  openModal('Order Customer',`
+    <label>PO</label>
+    <select id="oPO" onchange="fillP()">${p.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
+
+    <label>Nama customer</label><input id="oCust" placeholder="Nama customer">
+    <label>WhatsApp</label><input id="oWA" placeholder="08xxxxxxxxxx">
+    <label>Tanggal order</label><input id="oDate" type="date" value="${new Date().toISOString().slice(0,10)}">
+
+    <label>Barang</label>
+    <select id="oProduct" onchange="fillOptions()"></select>
+
     <div class="row">
       <div><label>Ukuran</label><select id="oSize" onchange="fillD()"></select></div>
       <div><label>Warna</label><select id="oColor" onchange="fillD()"></select></div>
     </div>
-    <label>Varian / Jenis</label><select id="oVariant" onchange="fillD()"></select>
+
+    <label>Varian / Jenis</label>
+    <select id="oVariant" onchange="fillD()"></select>
+
     <div id="dBox"></div>
+
     <label>Qty</label><input id="oQty" type="number" value="1" min="1">
-    <button class="full" onclick="saveOrder()">Simpan Order</button>`);fillP()}
-function selectedProduct(){return D.products.find(x=>String(x.uuid||x.id)===String(oProduct.value))}
+
+    <button class="full" type="button" onclick="saveOrder()">Simpan Order</button>
+  `);
+
+  fillP();
+}
+
+function selectedProduct(){
+  return D.products.find(x=>String(x.uuid||x.id)===String(oProduct.value));
+}
+
 function fillP(){
-  let p=D.products.filter(x=>String(x.po_id)===String(oPO.value));
-  if(!p.length)p=D.products;
-  oProduct.innerHTML=p.map(x=>`<option value="${x.uuid||x.id}">${esc(x.name)} — Rp${fmt(x.selling_price)}</option>`).join('');
+  const poId=String(oPO.value);
+  const products=D.products.filter(x=>String(x.po_id)===poId);
+
+  oProduct.innerHTML=products.length
+    ? products.map(x=>`<option value="${x.uuid||x.id}">${esc(x.name)} — Rp${fmt(x.selling_price)}</option>`).join('')
+    : '<option value="">Belum ada barang di PO ini</option>';
+
   fillOptions();
 }
+
+function optionHtml(vals){
+  const a=multiVals(vals);
+  return a.length
+    ? a.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('')
+    : '<option value="">-</option>';
+}
+
 function fillOptions(){
-  let p=selectedProduct();
-  oSize.innerHTML=optionHtml(p?p.size:'');
-  oColor.innerHTML=optionHtml(p?p.color:'');
-  oVariant.innerHTML=optionHtml(p?p.variant_type:'');
+  const p=selectedProduct();
+
+  oSize.innerHTML=optionHtml(p?.size);
+  oColor.innerHTML=optionHtml(p?.color);
+  oVariant.innerHTML=optionHtml(p?.variant_type);
+
   fillD();
 }
+
 function fillD(){
-  let p=selectedProduct();
-  if(!p){dBox.innerHTML='';return;}
-  dBox.innerHTML=`<div class="card"><b>${esc(p.name)}</b><br><span class="small">${esc(oSize.value||'-')} • ${esc(oColor.value||'-')} • ${esc(oVariant.value||'-')}<br><b>Rp${fmt(p.selling_price)}</b></span></div>`;
+  const p=selectedProduct();
+  if(!p){
+    dBox.innerHTML='';
+    return;
+  }
+
+  dBox.innerHTML=`<div class="card">
+    <b>${esc(p.name)}</b><br>
+    <span class="small">
+      Ukuran: ${esc(oSize.value||'-')} •
+      Warna: ${esc(oColor.value||'-')} •
+      Varian: ${esc(oVariant.value||'-')}
+      <br>Harga: <b>Rp${fmt(p.selling_price)}</b>
+    </span>
+  </div>`;
 }
-async function saveOrder(){try{let p=selectedProduct();if(!p)throw Error('Pilih barang');let c=D.customers.find(x=>x.name.toLowerCase()===oCust.value.trim().toLowerCase()&&x.whatsapp===oWA.value.trim());if(!c)c=(await api('customers','POST',{user_id:session.user.id,name:oCust.value.trim(),whatsapp:oWA.value.trim()}))[0];let o=(await api('orders','POST',{user_id:session.user.id,po_id:oPO.value,customer_id:c.uuid,order_number:'ORD-'+Date.now(),payment_status:'UNPAID',order_date:oDate.value}))[0],q=+oQty.value||1;await api('order_items','POST',{user_id:session.user.id,po_id:oPO.value,customer_id:c.uuid,product_id:p.uuid||p.id,product_name:p.name,size:oSize.value||'',color:oColor.value||'',variant_type:oVariant.value||'',quantity:q,unit_price:p.selling_price,subtotal:q*p.selling_price,ready_quantity:0});closeModal();await load();show('orders');alert('Order berhasil disimpan')}catch(e){alert(e.message)}}
+
+async function saveOrder(){
+  try{
+    const p=selectedProduct();
+    if(!p)throw Error('Pilih barang terlebih dahulu.');
+
+    const custName=oCust.value.trim();
+    if(!custName)throw Error('Nama customer wajib diisi.');
+
+    const qty=+oQty.value||0;
+    if(qty<1)throw Error('Qty minimal 1.');
+
+    const customer=await api('customers','POST',{
+      user_id:session.user.id,
+      name:custName,
+      whatsapp:oWA.value.trim()
+    });
+
+    const customerId=Array.isArray(customer)?customer[0]?.id:customer?.id;
+    if(!customerId)throw Error('Customer gagal dibuat.');
+
+    const order=await api('orders','POST',{
+      user_id:session.user.id,
+      customer_id:customerId,
+      po_id:oPO.value,
+      order_date:oDate.value,
+      payment_status:'pending'
+    });
+
+    await api('items','POST',{
+      user_id:session.user.id,
+      customer_id:customerId,
+      po_id:oPO.value,
+      product_id:p.uuid||p.id,
+      product_name:p.name,
+      size:oSize.value||'',
+      color:oColor.value||'',
+      variant_type:oVariant.value||'',
+      quantity:qty,
+      selling_price:p.selling_price
+    });
+
+    closeModal();
+    await load();
+    show('orders');
+    alert('Order berhasil dibuat');
+  }catch(e){
+    alert('Gagal membuat order: '+(e.message||String(e)));
+    console.error(e);
+  }
+}
 async function load(){
 if(!session)return;
 D.po=[];D.products=[];D.customers=[];D.orders=[];D.items=[];window.lastPOReadError='';
