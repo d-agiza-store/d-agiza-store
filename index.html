@@ -2,7 +2,42 @@
 nav, .bottom-nav, #bottomNav{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:4px!important;width:100%!important}
 nav button, .bottom-nav button, #bottomNav button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;padding:8px 3px!important;font-size:10px!important}
 nav button span, .bottom-nav button span, #bottomNav button span{display:block!important;white-space:nowrap!important}
-</style></head><body>
+</style>
+<style id="dagiza-bottom-nav-fix">
+.nav{
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  z-index:50!important;
+}
+.navin{
+  max-width:520px!important;
+  margin:0 auto!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  gap:2px!important;
+  padding:6px 4px!important;
+  overflow:hidden!important;
+}
+.navin button{
+  flex:1 1 0!important;
+  min-width:0!important;
+  width:auto!important;
+  padding:6px 2px!important;
+  font-size:10px!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.navin button.active{
+  font-weight:800!important;
+}
+</style>
+</head><body>
 <div id="auth" class="auth"><div class="card"><div class="brand">d’Agiza Store</div><p class="sub">PO & Order Management</p><h2>Masuk</h2><label>Email</label><input id="email" type="email"><label>Password</label><input id="password" type="password"><button class="full" onclick="login()">Masuk</button><button class="secondary full" style="margin-top:8px" onclick="signup()">Buat akun</button><div id="authMsg"></div><div id="resetPanel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"><h3 style="margin:0 0 6px">Buat Password Baru</h3><p class="small">Masukkan password baru untuk akun d’Agiza Store.</p><label>Password baru</label><input id="newPassword" type="password" placeholder="Minimal 6 karakter"><label>Ulangi password</label><input id="newPassword2" type="password" placeholder="Ulangi password"><button class="full" onclick="updatePassword()">Simpan Password Baru</button><button class="secondary full" style="margin-top:8px" onclick="hideReset()">Kembali ke Login</button><div id="resetMsg"></div></div></div></div>
 <div id="app" class="app hidden"><div class="top"><div class="brand">d’Agiza Store</div><div class="sub">PO & Order Management</div></div>
 <section id="dashboard" class="screen active"><div class="card hero"><h2>Halo 👋</h2><p>Kelola PO, pesanan customer, supplier, dan invoice dari satu tempat.</p></div><div class="grid"><div class="stat"><b id="statPO">0</b><span>PO Aktif</span></div><div class="stat"><b id="statOrder">0</b><span>Total Order</span></div><div class="stat"><b id="statProduct">0</b><span>Barang</span></div><div class="stat"><b id="statReady">0</b><span>Ready</span></div></div><button class="full" style="margin-top:12px" onclick="openPOModal()">＋ Buat PO Baru</button></section>
@@ -10,7 +45,7 @@ nav button span, .bottom-nav button span, #bottomNav button span{display:block!i
 <section id="products" class="screen"><div class="row"><h2>Barang</h2><button onclick="openProductModal()">＋ Barang</button></div><div id="productList" class="list"></div></section>
 <section id="orders" class="screen"><div class="row"><h2>Order</h2><button onclick="openOrderModal()">＋ Order</button></div><div id="orderList" class="list"></div></section>
 <section id="settings" class="screen"><h2>Pengaturan</h2><div class="card"><p class="small">Akun</p><b id="userEmail"></b><button class="danger full" style="margin-top:15px" onclick="logout()">Keluar</button></div></section></div>
-<div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('customers')" id="nav-customers">👤<span>Customer</span></button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
+<div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('customers')" id="nav-customers">👤<br>Customer</button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
 <div id="modal" class="modal"><div class="sheet"><div class="row"><h2 id="modalTitle">Tambah</h2><button class="secondary" onclick="closeModal()">Tutup</button></div><div id="modalBody"></div></div></div>
 <script>
 const URL="https://jghusevnsvinuzfjkqmk.supabase.co",KEY="sb_publishable_XQ3SRiit7Hrax-iC5DWdzg_2BCMgVKQ";const SUPABASE_URL=URL,SUPABASE_KEY=KEY;let session=JSON.parse(localStorage.getItem('dagiza_session')||'null'),D={po:[],products:[],customers:[],orders:[],items:[]};
@@ -527,7 +562,7 @@ function render(){
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function fmt(n){return Number(n||0).toLocaleString('id-ID')}async function start(){auth.classList.add('hidden');app.classList.remove('hidden');userEmail.textContent=session.user?.email||'';await load()}if(isRecovery()&&getRecoveryAccessToken()){document.getElementById("auth").classList.remove("hidden");document.getElementById("app").classList.add("hidden");showReset()}else if(session?.access_token)start();
-</script></body></html><section id="customers" class="page" style="display:none">
+</script></body></html><section id="customers" class="screen">
 <div class="head"><div><h2>Customer</h2><div class="small">Daftar customer</div></div><button class="primary" type="button" onclick="openCustomerModal()">＋ Tambah Customer</button></div>
 <div id="customerList"><div class="card small">Memuat customer...</div></div>
 </section>
