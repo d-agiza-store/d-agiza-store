@@ -362,7 +362,7 @@ function renderCustomers(){
   const el=document.getElementById('customerList');
   if(!el)return;
   const rows=D.customers||[];
-  el.innerHTML=rows.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name||'')}</b><br><span class="small">${esc(x.whatsapp||x.phone||'-')}</span>${x.address?`<br><span class="small">${esc(x.address)}</span>`:''}</div><div style="display:flex;gap:6px"><button type="button" class="secondary" onclick="editCustomer('${x.id}')">Edit</button><button type="button" class="danger" onclick="deleteCustomer('${x.id}','${esc(x.name||'')}')">Hapus</button></div></div></div>`).join('')||'<div class="card small">Belum ada customer.</div>';
+  el.innerHTML=rows.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name||'')}</b><br><span class="small">${esc(x.whatsapp||x.phone||'-')}</span></div><div style="display:flex;gap:6px"><button type="button" class="secondary" onclick="editCustomer('${x.id}')">Edit</button><button type="button" class="danger" onclick="deleteCustomer('${x.id}','${esc(x.name||'')}')">Hapus</button></div></div></div>`).join('')||'<div class="card small">Belum ada customer.</div>';
 }
 function openCustomerModal(id){
   const c=id?(D.customers||[]).find(x=>String(x.id)===String(id)):null;
@@ -372,14 +372,14 @@ function editCustomer(id){openCustomerModal(id)}
 async function saveCustomer(){
   try{
     const name=cName.value.trim(); if(!name)throw Error('Nama customer wajib diisi.');
-    await api('customers','POST',{user_id:session.user.id,name,whatsapp:cWA.value.trim(),address:cAddress.value.trim()});
+    await api('customers','POST',{user_id:session.user.id,name,whatsapp:cWA.value.trim()});
     closeModal();await load();show('customers');alert('Customer berhasil disimpan');
   }catch(e){alert('Gagal menyimpan customer: '+(e.message||e));}
 }
 async function saveCustomerEdit(id){
   try{
     const name=cName.value.trim(); if(!name)throw Error('Nama customer wajib diisi.');
-    await api('customers','PATCH',{name,whatsapp:cWA.value.trim(),address:cAddress.value.trim()},'?id=eq.'+encodeURIComponent(id));
+    await api('customers','PATCH',{name,whatsapp:cWA.value.trim()},'?id=eq.'+encodeURIComponent(id));
     closeModal();await load();show('customers');alert('Customer berhasil diperbarui');
   }catch(e){alert('Gagal memperbarui customer: '+(e.message||e));}
 }
