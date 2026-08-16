@@ -6,7 +6,7 @@
 <section id="products" class="screen"><div class="row"><h2>Barang</h2><button onclick="openProductModal()">＋ Barang</button></div><div id="productList" class="list"></div></section>
 <section id="orders" class="screen"><div class="row"><h2>Order</h2><button onclick="openOrderModal()">＋ Order</button></div><div id="orderList" class="list"></div></section>
 <section id="settings" class="screen"><h2>Pengaturan</h2><div class="card"><p class="small">Akun</p><b id="userEmail"></b><button class="danger full" style="margin-top:15px" onclick="logout()">Keluar</button></div></section></div>
-<div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
+<div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('customers')" id="nav-customers">👤<span>Customer</span></button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
 <div id="modal" class="modal"><div class="sheet"><div class="row"><h2 id="modalTitle">Tambah</h2><button class="secondary" onclick="closeModal()">Tutup</button></div><div id="modalBody"></div></div></div>
 <script>
 const URL="https://jghusevnsvinuzfjkqmk.supabase.co",KEY="sb_publishable_XQ3SRiit7Hrax-iC5DWdzg_2BCMgVKQ";const SUPABASE_URL=URL,SUPABASE_KEY=KEY;let session=JSON.parse(localStorage.getItem('dagiza_session')||'null'),D={po:[],products:[],customers:[],orders:[],items:[]};
@@ -295,6 +295,37 @@ function calc(){
   pSell.value=Math.ceil(raw/1000)*1000;
 }
 async function saveProduct(){try{let c=+pCost.value||0,o=+pOp.value||0,p=+pProfit.value||0,raw=c/(1-(o+p)/100)||0,s=Math.ceil(raw/1000)*1000;await api('products','POST',{user_id:session.user.id,po_id:pPO.value,name:pName.value,size:pSize.value,color:pColor.value,variant_type:pVariant.value,supplier_cost:c,operational_percent:o,profit_percent:p,selling_price:s,notes:pNotes.value});closeModal();await load();show('products');alert('Barang tersimpan dan otomatis tersedia di Order')}catch(e){alert(e.message)}}
+
+function renderCustomers(){
+  const el=document.getElementById('customerList');
+  if(!el)return;
+  const rows=D.customers||[];
+  el.innerHTML=rows.map(x=>`<div class="item"><div class="row"><div><b>${esc(x.name||'')}</b><br><span class="small">${esc(x.whatsapp||x.phone||'-')}</span>${x.address?`<br><span class="small">${esc(x.address)}</span>`:''}</div><div style="display:flex;gap:6px"><button type="button" class="secondary" onclick="editCustomer('${x.id}')">Edit</button><button type="button" class="danger" onclick="deleteCustomer('${x.id}','${esc(x.name||'')}')">Hapus</button></div></div></div>`).join('')||'<div class="card small">Belum ada customer.</div>';
+}
+function openCustomerModal(id){
+  const c=id?(D.customers||[]).find(x=>String(x.id)===String(id)):null;
+  openModal(c?'Edit Customer':'Tambah Customer',`<label>Nama customer</label><input id="cName" value="${esc(c?.name||'')}" placeholder="Nama customer"><label>WhatsApp</label><input id="cWA" value="${esc(c?.whatsapp||c?.phone||'')}" placeholder="08xxxxxxxxxx"><label>Alamat</label><textarea id="cAddress" placeholder="Alamat (opsional)">${esc(c?.address||'')}</textarea><button class="full" onclick="${c?`saveCustomerEdit('${c.id}')`:'saveCustomer()'}">${c?'Simpan Perubahan':'Simpan Customer'}</button>`);
+}
+function editCustomer(id){openCustomerModal(id)}
+async function saveCustomer(){
+  try{
+    const name=cName.value.trim(); if(!name)throw Error('Nama customer wajib diisi.');
+    await api('customers','POST',{user_id:session.user.id,name,whatsapp:cWA.value.trim(),address:cAddress.value.trim()});
+    closeModal();await load();show('customers');alert('Customer berhasil disimpan');
+  }catch(e){alert('Gagal menyimpan customer: '+(e.message||e));}
+}
+async function saveCustomerEdit(id){
+  try{
+    const name=cName.value.trim(); if(!name)throw Error('Nama customer wajib diisi.');
+    await api('customers','PATCH',{name,whatsapp:cWA.value.trim(),address:cAddress.value.trim()},'?id=eq.'+encodeURIComponent(id));
+    closeModal();await load();show('customers');alert('Customer berhasil diperbarui');
+  }catch(e){alert('Gagal memperbarui customer: '+(e.message||e));}
+}
+async function deleteCustomer(id,name){
+  if(!confirm('Hapus customer "'+name+'"?\n\nData yang sudah dihapus tidak bisa dikembalikan.'))return;
+  try{await api('customers','DELETE',null,'?id=eq.'+encodeURIComponent(id));await load();show('customers');alert('Customer berhasil dihapus');}
+  catch(e){alert('Gagal menghapus customer: '+(e.message||e));}
+}
 function openOrderModal(){
   const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
   if(!p.length)return alert('Buat Open PO dulu.');
@@ -429,6 +460,7 @@ async function saveOrder(){
   }
 }
 async function load(){
+try{D.customers=await api('customers','GET')}catch(e){D.customers=[];console.error(e)}
 if(!session)return;
 D.po=[];D.products=[];D.customers=[];D.orders=[];D.items=[];window.lastPOReadError='';
 const read=async(t)=>{
@@ -448,7 +480,8 @@ D.customers=await read('customers');
 D.orders=await read('orders');
 D.items=await read('order_items');
 render();
-}
+
+renderCustomers();}
 function render(){
   statPO.textContent=D.po.filter(x=>String(x.status||'').toLowerCase()==='open').length;
   statOrder.textContent=D.orders.length;
@@ -490,4 +523,7 @@ function render(){
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function fmt(n){return Number(n||0).toLocaleString('id-ID')}async function start(){auth.classList.add('hidden');app.classList.remove('hidden');userEmail.textContent=session.user?.email||'';await load()}if(isRecovery()&&getRecoveryAccessToken()){document.getElementById("auth").classList.remove("hidden");document.getElementById("app").classList.add("hidden");showReset()}else if(session?.access_token)start();
-</script></body></html>
+</script></body></html><section id="customers" class="page" style="display:none">
+<div class="head"><div><h2>Customer</h2><div class="small">Data customer</div></div><button class="primary" onclick="openCustomerModal()">＋ Customer</button></div>
+<div id="customerList"></div>
+</section>
