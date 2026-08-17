@@ -648,7 +648,7 @@ function render(){
     </div>`;
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
-async async function editOrder(id){
+async function editOrder(id){
   window.editingOrderId=id;
   const o=D.orders.find(x=>String(x.id)===String(id));
   if(!o){alert('Order tidak ditemukan.');return;}
