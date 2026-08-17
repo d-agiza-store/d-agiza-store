@@ -488,20 +488,34 @@ async function generateOrderNumber(){
   const prefix=months[d.getMonth()];
   const datePart=yy+mm+dd;
 
-  // Get existing order numbers for this month and continue from the highest sequence.
-  const start=yy+mm;
-  const end=yy+pad(d.getMonth()+1);
+  // Urutan khusus tanggal yang dipilih pada form Order.
+  // Contoh tanggal 16 Agustus: AGT-260816-001, 002, 003, dst.
+  const orderDateEl=document.getElementById('oDate');
+  const selectedDate=orderDateEl?.value || `${d.getFullYear()}-${mm}-${dd}`;
+  const parts=selectedDate.split('-');
+  const targetDatePart=parts.length===3
+    ? String(parts[0]).slice(-2)+parts[1]+parts[2]
+    : datePart;
+  const targetMonth=Number(parts[1])-1;
+  const targetPrefix=months[targetMonth] || prefix;
+
   let maxSeq=0;
   try{
-    const rows=await api('orders','GET','?select=order_number&order_number=like.'+encodeURIComponent(prefix+'-'+start+'%-')+'&order=order_number.desc&limit=1000');
+    const pattern=targetPrefix+'-'+targetDatePart+'-%';
+    const rows=await api(
+      'orders',
+      'GET',
+      '?select=order_number&order_number=like.'+encodeURIComponent(pattern)+'&order=order_number.desc&limit=1000'
+    );
     (rows||[]).forEach(r=>{
       const n=String(r.order_number||'').match(/-(\d{3})$/);
       if(n) maxSeq=Math.max(maxSeq,Number(n[1]));
     });
   }catch(e){
-    console.warn('Tidak bisa membaca urutan order, mulai dari 001:',e);
+    console.warn('Tidak bisa membaca urutan order tanggal tersebut, mulai dari 001:',e);
   }
-  return prefix+'-'+datePart+'-'+String(maxSeq+1).padStart(3,'0');
+
+  return targetPrefix+'-'+targetDatePart+'-'+String(maxSeq+1).padStart(3,'0');
 }
 function openOrderModal(){
   const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
