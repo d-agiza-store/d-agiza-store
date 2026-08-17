@@ -482,40 +482,38 @@ async function generateOrderNumber(){
   const d=new Date();
   const months=['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
   const pad=n=>String(n).padStart(2,'0');
-  const yy=String(d.getFullYear()).slice(-2);
-  const mm=pad(d.getMonth()+1);
-  const dd=pad(d.getDate());
-  const prefix=months[d.getMonth()];
-  const datePart=yy+mm+dd;
 
-  // Urutan khusus tanggal yang dipilih pada form Order.
-  // Contoh tanggal 16 Agustus: AGT-260816-001, 002, 003, dst.
+  // Pakai tanggal yang DIPILIH di form Order.
   const orderDateEl=document.getElementById('oDate');
-  const selectedDate=orderDateEl?.value || `${d.getFullYear()}-${mm}-${dd}`;
+  const selectedDate=(orderDateEl && orderDateEl.value) || `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const parts=selectedDate.split('-');
-  const targetDatePart=parts.length===3
-    ? String(parts[0]).slice(-2)+parts[1]+parts[2]
-    : datePart;
-  const targetMonth=Number(parts[1])-1;
-  const targetPrefix=months[targetMonth] || prefix;
 
+  if(parts.length!==3) throw Error('Tanggal order tidak valid.');
+
+  const year=parts[0];
+  const month=parts[1];
+  const day=parts[2];
+  const targetPrefix=months[Number(month)-1];
+  const targetDatePart=String(year).slice(-2)+month+day;
+  const prefix=targetPrefix+'-'+targetDatePart+'-';
+
+  // Ambil nomor order yang sudah ada lalu cari urutan terbesar
+  // di TANGGAL YANG SAMA. Tidak bergantung pada filter "like".
   let maxSeq=0;
   try{
-    const pattern=targetPrefix+'-'+targetDatePart+'-%';
-    const rows=await api(
-      'orders',
-      'GET',
-      '?select=order_number&order_number=like.'+encodeURIComponent(pattern)+'&order=order_number.desc&limit=1000'
-    );
+    const rows=await api('orders','GET','?select=order_number&order=order_number.desc&limit=5000');
     (rows||[]).forEach(r=>{
-      const n=String(r.order_number||'').match(/-(\d{3})$/);
-      if(n) maxSeq=Math.max(maxSeq,Number(n[1]));
+      const value=String(r.order_number||'');
+      if(value.startsWith(prefix)){
+        const match=value.slice(prefix.length).match(/^(\d+)$/);
+        if(match) maxSeq=Math.max(maxSeq,Number(match[1]));
+      }
     });
   }catch(e){
-    console.warn('Tidak bisa membaca urutan order tanggal tersebut, mulai dari 001:',e);
+    throw Error('Tidak bisa membaca nomor Order sebelumnya: '+(e.message||e));
   }
 
-  return targetPrefix+'-'+targetDatePart+'-'+String(maxSeq+1).padStart(3,'0');
+  return prefix+String(maxSeq+1).padStart(3,'0');
 }
 function openOrderModal(){
   const p=D.po.filter(x=>String(x.status||'').toLowerCase()==='open');
