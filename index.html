@@ -688,7 +688,7 @@ async function editOrder(id){
     const c=(D.customers||[]).find(x=>String(x.id)===String(document.getElementById('editOrderCustomer').value));
     document.getElementById('editOrderWA').value=c?.whatsapp||c?.phone||'';
   });
-  fillEditOrderOptions('${esc(item?.size||'')}','${esc(item?.color||'')}','${esc(item?.variant_type||'')}');
+  fillEditOrderOptions(item?.size||'',item?.color||'',item?.variant_type||'');
 }
 function fillEditOrderProducts(){
   const poId=document.getElementById('editOrderPO')?.value;
