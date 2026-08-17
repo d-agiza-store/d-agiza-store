@@ -541,7 +541,7 @@ async function saveOrder(){
     const qty=+oQty.value||0;
     if(qty<1)throw Error('Qty minimal 1.');
 
-    await api('orders','POST',{order_number:await generateOrderNumber(),
+    const createdOrder = await api('orders','POST',{order_number:await generateOrderNumber(),
       user_id:session.user.id,
       customer_id:customerId,
       po_id:oPO.value,
@@ -549,9 +549,12 @@ async function saveOrder(){
       payment_status:'unpaid'
     });
 
+    const orderRow = Array.isArray(createdOrder) ? createdOrder[0] : createdOrder;
+    if(!orderRow?.id) throw Error('Order berhasil dibuat tetapi ID order tidak dikembalikan.');
+
     await api('order_items','POST',{
       user_id:session.user.id,
-      customer_id:customerId,
+      order_id:orderRow.id,
       po_id:oPO.value,
       product_id:p.uuid||p.id,
       product_name:p.name,
@@ -630,7 +633,7 @@ function render(){
 
   orderList.innerHTML=D.orders.map(o=>{
     let c=D.customers.find(x=>x.id===o.customer_id),
-        its=D.items.filter(x=>x.customer_id===o.customer_id&&x.po_id===o.po_id);
+        its=D.items.filter(x=>x.order_id===o.id);
     return `<div class="item"><b>${esc(c?.name||'Customer')}</b><br><span class="small">${esc(o.order_number)} • ${o.order_date||''} • ${esc(o.payment_status||'')}</span><br>${its.map(i=>`${esc(i.product_name)} — ${esc(i.size||'-')} / ${esc(i.color||'-')} / ${esc(i.variant_type||'-')} × ${i.quantity}`).join('<br>')}</div>`;
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
