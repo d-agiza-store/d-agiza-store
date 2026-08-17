@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <script>
 const URL="https://jghusevnsvinuzfjkqmk.supabase.co",KEY="sb_publishable_XQ3SRiit7Hrax-iC5DWdzg_2BCMgVKQ";const SUPABASE_URL=URL,SUPABASE_KEY=KEY;let session=JSON.parse(localStorage.getItem('dagiza_session')||'null'),D={po:[],products:[],customers:[],orders:[],items:[]};
 const H=()=>({apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=representation'});
-async function api(t,m='GET',b=null,q=''){let r=await fetch(URL+'/rest/v1/'+t+q,{method:m,headers:H(),body:b?JSON.stringify(b):undefined}),x=await r.text(),j=x?JSON.parse(x):null;if(!r.ok)throw Error(j?.message||j?.hint||x||'Gagal');return j}
+async function api(t,m='GET',b=null,q=''){const opts={method:m,headers:H()};if(m!=='GET'&&m!=='HEAD'&&b!=null)opts.body=JSON.stringify(b);let r=await fetch(URL+'/rest/v1/'+t+q,opts),x=await r.text(),j=x?JSON.parse(x):null;if(!r.ok)throw Error(j?.message||j?.hint||x||'Gagal');return j}
 function isRecovery(){return /type=recovery/.test(window.location.hash||"")}
 function getRecoveryAccessToken(){return new URLSearchParams((window.location.hash||"").replace(/^#/,"")).get("access_token")||""}
 function showReset(){document.getElementById("resetPanel").classList.remove("hidden");document.querySelector("#auth h2").textContent="Reset Password";document.getElementById('loginBtn')?.classList.add('hidden');document.getElementById('signupBtn')?.classList.add('hidden')}
@@ -501,7 +501,7 @@ async function generateOrderNumber(){
   // di TANGGAL YANG SAMA. Tidak bergantung pada filter "like".
   let maxSeq=0;
   try{
-    const rows=await api('orders','GET','?select=order_number&order=order_number.desc&limit=5000');
+    const rows=await api('orders','GET',null,'?select=order_number&order=order_number.desc&limit=5000');
     (rows||[]).forEach(r=>{
       const value=String(r.order_number||'');
       if(value.startsWith(prefix)){
