@@ -68,19 +68,116 @@ main, .content, .app-content, #app, body{
 </style><style id="order-save-final-scroll">
 #orders, #order, .order-form{padding-bottom:150px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
 #orderList{padding-bottom:140px!important}
-</style></head><body>
+</style>
+<style id="dagiza-modern-ui">
+:root{
+  --pink:#ef4d78;--pink2:#ffdce7;--pink3:#fff1f5;
+  --cream:#fffaf7;--ink:#251d1b;--muted:#756966;
+  --green:#53c9a9;--yellow:#ffd77d;--purple:#8b74e8;--blue:#6d8fe8;
+}
+body{background:linear-gradient(180deg,#fffaf8 0%,#fff 55%,#fff8fb 100%);color:var(--ink)}
+.app{max-width:520px;padding-bottom:96px}
+.top{padding:18px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.top .brand{font-size:24px;color:#d92e5d;line-height:1.05}
+.top .sub{font-size:11px}
+.top:after{content:"♡";display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:#fff0f5;border:1px solid #ffd7e4;color:#e84772;font-size:22px}
+.screen{padding:0 16px 120px!important}
+#dashboard{padding-top:4px!important}
+.dashboard-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#ffe8ef,#fff4ec 70%,#ffe7d5);border:1px solid #f6d4dd;border-radius:24px;padding:22px 18px 20px;margin:8px 0 12px;min-height:135px}
+.dashboard-hero:after{content:"♡  ✦  ♡";position:absolute;right:18px;top:16px;color:#ef7395;font-size:24px;opacity:.65}
+.dashboard-hero h2{margin:0 0 7px;color:#c82958;font-size:27px;font-family:cursive}
+.dashboard-hero p{margin:4px 0;color:#3f3330;font-size:14px;max-width:70%}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.dstat{border-radius:20px;padding:15px;border:1px solid #eadfe0;min-height:96px;position:relative;overflow:hidden}
+.dstat.pink{background:#fff0f4}.dstat.yellow{background:#fff8e8}.dstat.green{background:#eefaf5}.dstat.purple{background:#f5f1ff}
+.dstat .ico{font-size:27px}.dstat b{display:block;font-size:23px;margin-top:4px}.dstat span{font-size:11px;color:var(--muted)}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 4px 10px}
+.section-title h3{margin:0;font-size:19px}
+.date-chip{font-size:11px;background:#f7f2f0;border-radius:99px;padding:8px 10px;color:#5f5551}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.menu-card{border:1px solid #eadfe0;border-radius:18px;padding:14px 7px;text-align:center;min-height:102px;background:#fff}
+.menu-card:nth-child(3n+1){background:#fff1f5}.menu-card:nth-child(3n+2){background:#fff9ea}.menu-card:nth-child(3n){background:#f0faf7}
+.menu-card .mi{font-size:29px}.menu-card b{display:block;font-size:12px;margin-top:7px}.menu-card small{display:block;font-size:9px;color:var(--muted);margin-top:3px}
+.quick-po{margin-top:15px;width:100%;background:linear-gradient(90deg,#ef4d78,#f47d98);box-shadow:0 8px 20px #ef4d7830}
+.dashboard-list{background:#fff;border:1px solid #eadfe0;border-radius:20px;padding:6px 12px}
+.dashboard-list .item{padding:12px 2px}
+.dashboard-list .item .row{align-items:center}
+.progress{width:70px;height:8px;background:#eee;border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:#58cdb0;border-radius:99px}
+.nav{background:#fff;box-shadow:0 -5px 22px #4a27300e;border-top:1px solid #eee3e4}
+.navin{max-width:520px!important;padding:6px 7px 7px!important;gap:2px!important}
+.navin button{color:#171313!important;font-size:10px!important;border-radius:13px!important;padding:5px 2px!important}
+.navin button.active{color:var(--pink)!important;background:#fff0f5!important}
+.navin .plus-tab{font-size:25px!important;color:#fff!important;background:#ef4d78!important;width:54px!important;height:54px!important;border-radius:50%!important;margin:-20px auto 0!important;box-shadow:0 4px 0 #ffd7e2,0 8px 18px #ef4d7840!important;border:4px solid #fff!important}
+.navin .plus-tab.active{background:#ef4d78!important;color:#fff!important}
+.navin button span{font-size:10px}
+.card{border-radius:18px}
+button{background:var(--pink)}
+.secondary{background:#fff0f5}
+.auth{background:linear-gradient(160deg,#fff7fa,#fffdf8);padding:22px}
+.auth .card{border:1px solid #f2dbe3;box-shadow:0 12px 35px #e8497820;border-radius:26px;padding:24px}
+.auth .brand{color:#df315f}
+.auth h2{margin-bottom:18px}
+.auth input{height:48px;border-radius:14px}
+.auth button{height:48px}
+.lainnya-panel{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.invoice-row{padding:12px 0;border-bottom:1px solid var(--line)}
+@media(max-width:390px){.menu-grid{grid-template-columns:repeat(2,1fr)}.dashboard-hero p{max-width:85%}}
+</style>
+</head><body>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   const e=document.getElementById('email'),p=document.getElementById('password');
-  if(p)p.addEventListener('keydown',function(ev){if(ev.key==='Enter')login()});
+  const b=document.querySelector('#auth button[onclick="login()"]');
+  if(p)p.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();login()}});
+  if(b)b.addEventListener('click',function(ev){ev.preventDefault();login()});
 });
 </script>
 <div id="auth" class="auth"><div class="card"><div class="brand">d’Agiza Store</div><p class="sub">PO & Order Management</p><h2>Masuk</h2><label>Email</label><input id="email" type="email"><label>Password</label><input id="password" type="password"><button class="full" onclick="login()">Masuk</button><button class="secondary full" style="margin-top:8px" onclick="signup()">Buat akun</button><div id="authMsg"></div><div id="resetPanel" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)"><h3 style="margin:0 0 6px">Buat Password Baru</h3><p class="small">Masukkan password baru untuk akun d’Agiza Store.</p><label>Password baru</label><input id="newPassword" type="password" placeholder="Minimal 6 karakter"><label>Ulangi password</label><input id="newPassword2" type="password" placeholder="Ulangi password"><button class="full" onclick="updatePassword()">Simpan Password Baru</button><button class="secondary full" style="margin-top:8px" onclick="hideReset()">Kembali ke Login</button><div id="resetMsg"></div></div></div></div>
-<div id="app" class="app hidden"><div class="top"><div class="brand">d’Agiza Store</div><div class="sub">PO & Order Management</div></div>
-<section id="dashboard" class="screen active"><div class="card hero"><h2>Halo 👋</h2><p>Kelola PO, pesanan customer, supplier, dan invoice dari satu tempat.</p></div><div class="grid"><div class="stat"><b id="statPO">0</b><span>PO Aktif</span></div><div class="stat"><b id="statOrder">0</b><span>Total Order</span></div><div class="stat"><b id="statProduct">0</b><span>Barang</span></div><div class="stat"><b id="statReady">0</b><span>Ready</span></div></div><button class="full" style="margin-top:12px" onclick="openPOModal()">＋ Buat PO Baru</button></section>
+<div id="app" class="app hidden"><div class="top"><div><div class="brand">d’Agiza Store</div><div class="sub">Bestie Mama-Mama Cantik ♡</div></div></div>
+<section id="dashboard" class="screen active">
+  <div class="dashboard-hero">
+    <h2>Hai, Nanda! 💕</h2>
+    <p>Semangat jualannya hari ini yaa... ✨</p>
+    <p>Kelola PO, pesanan & laporan jadi lebih mudah!</p>
+  </div>
+  <div class="stat-grid">
+    <div class="dstat pink"><div class="ico">📦</div><b id="statPO">0</b><span>PO Aktif</span></div>
+    <div class="dstat yellow"><div class="ico">🛍️</div><b id="statOrder">0</b><span>Total Order</span></div>
+    <div class="dstat green"><div class="ico">💳</div><b id="statPayment">Rp 0</b><span>Nilai Pesanan</span></div>
+    <div class="dstat purple"><div class="ico">🚚</div><b id="statReady">0</b><span>Barang Ready</span></div>
+  </div>
+  <div class="section-title"><h3>⭐ Menu Utama</h3><span class="date-chip" id="todayChip">Hari ini</span></div>
+  <div class="menu-grid">
+    <button class="menu-card" onclick="show('po')"><div class="mi">📋</div><b>Open PO</b><small>Buat & kelola PO</small></button>
+    <button class="menu-card" onclick="show('products')"><div class="mi">👗</div><b>Barang & Harga</b><small>Input barang PO</small></button>
+    <button class="menu-card" onclick="show('orders')"><div class="mi">🛒</div><b>Order</b><small>Input pesanan customer</small></button>
+    <button class="menu-card" onclick="show('recap')"><div class="mi">📑</div><b>Rekap Order</b><small>Lihat semua pesanan</small></button>
+    <button class="menu-card" onclick="show('po')"><div class="mi">🔐</div><b>Close PO</b><small>Kunci & buat rekap</small></button>
+    <button class="menu-card" onclick="show('products')"><div class="mi">📦</div><b>Rekap Supplier</b><small>Ringkasan barang</small></button>
+    <button class="menu-card" onclick="show('products')"><div class="mi">🚚</div><b>Barang Ready</b><small>Kelola barang masuk</small></button>
+    <button class="menu-card" onclick="show('invoice')"><div class="mi">🧾</div><b>Invoice</b><small>Kirim ke customer</small></button>
+    <button class="menu-card" onclick="show('recap')"><div class="mi">💳</div><b>Pembayaran</b><small>Cek pembayaran</small></button>
+    <button class="menu-card" onclick="show('recap')"><div class="mi">📊</div><b>Laporan</b><small>Omset, profit & stok</small></button>
+    <button class="menu-card" onclick="show('settings')"><div class="mi">⚙️</div><b>Pengaturan</b><small>Data toko & akun</small></button>
+  </div>
+  <button class="quick-po" onclick="openPOModal()">＋ Buat PO Baru</button>
+  <div class="section-title"><h3>🎁 PO Aktif Saat Ini</h3></div>
+  <div id="dashboardPOList" class="dashboard-list"><div class="small">Memuat...</div></div>
+</section>
 <section id="po" class="screen"><div class="row"><h2>Open PO</h2><div class="row"><button class="secondary" onclick="load()">↻</button><button onclick="openPOModal()">＋ PO</button></div></div><div id="poList" class="list"></div></section>
 <section id="products" class="screen"><div class="row"><h2>Barang</h2><button onclick="openProductModal()">＋ Barang</button></div><div id="productList" class="list"></div></section>
 <section id="orders" class="screen"><div class="row"><h2>Order</h2><button onclick="openOrderModal()">＋ Order</button></div><div id="orderList" class="list"></div></section>
+<section id="recap" class="screen">
+  <div class="section-title"><h2>Rekap Order</h2><span class="date-chip">Semua Order</span></div>
+  <div class="card"><b>Ringkasan</b><p class="small">Total order dan nilai pesanan dihitung dari data order + harga jual barang.</p></div>
+  <div id="recapList" class="list"></div>
+</section>
+<section id="invoice" class="screen">
+  <div class="section-title"><h2>Invoice</h2><span class="date-chip">Order</span></div>
+  <div class="card"><b>Invoice Customer</b><p class="small">Pilih order untuk melihat detail sebelum dikirim melalui WhatsApp.</p></div>
+  <div id="invoiceList" class="list"></div>
+</section>
 <section id="customers" class="screen">
   <div class="head">
     <div>
@@ -92,7 +189,15 @@ document.addEventListener('DOMContentLoaded',function(){
   <div id="customerList"><div class="card small">Belum ada customer.</div></div>
 </section>
 <section id="settings" class="screen"><h2>Pengaturan</h2><div class="card"><p class="small">Akun</p><b id="userEmail"></b><button class="danger full" style="margin-top:15px" onclick="logout()">Keluar</button></div></section></div>
-<div class="nav"><div class="navin"><button onclick="show('dashboard')">🏠<br>Dashboard</button><button onclick="show('po')">📦<br>PO</button><button onclick="show('products')">🛍️<br>Barang</button><button onclick="show('orders')">🛒<br>Order</button><button onclick="show('customers')" id="nav-customers">👤<br>Customer</button><button onclick="show('settings')">⚙️<br>Setting</button></div></div>
+<div class="nav"><div class="navin">
+<button onclick="show('dashboard')">🏠<br><span>Home</span></button>
+<button onclick="show('po')">📦<br><span>PO</span></button>
+<button onclick="show('orders')">🛒<br><span>Order</span></button>
+<button class="plus-tab" type="button" onclick="openQuickMenu()">＋</button>
+<button onclick="show('recap')">📄<br><span>Rekap</span></button>
+<button onclick="show('invoice')">🧾<br><span>Invoice</span></button>
+<button onclick="openMoreMenu()">•••<br><span>Lainnya</span></button>
+</div></div>
 <div id="modal" class="modal"><div class="sheet"><div class="row"><h2 id="modalTitle">Tambah</h2><button class="secondary" onclick="closeModal()">Tutup</button></div><div id="modalBody"></div></div></div>
 <script>
 const URL="https://jghusevnsvinuzfjkqmk.supabase.co",KEY="sb_publishable_XQ3SRiit7Hrax-iC5DWdzg_2BCMgVKQ";const SUPABASE_URL=URL,SUPABASE_KEY=KEY;let session=JSON.parse(localStorage.getItem('dagiza_session')||'null'),D={po:[],products:[],customers:[],orders:[],items:[]};
@@ -103,7 +208,38 @@ function getRecoveryAccessToken(){return new URLSearchParams((window.location.ha
 function showReset(){document.getElementById("resetPanel").classList.remove("hidden");document.querySelector("#auth h2").textContent="Reset Password";document.querySelector('#auth button[onclick="login()"]').classList.add("hidden");document.querySelector('#auth button[onclick="signup()"]').classList.add("hidden")}
 function hideReset(){document.getElementById("resetPanel").classList.add("hidden");document.querySelector("#auth h2").textContent="Masuk";document.querySelector('#auth button[onclick="login()"]').classList.remove("hidden");document.querySelector('#auth button[onclick="signup()"]').classList.remove("hidden")}
 async function updatePassword(){const p1=document.getElementById("newPassword").value,p2=document.getElementById("newPassword2").value,box=document.getElementById("resetMsg");if(p1.length<6){box.innerHTML='<div class="error">Password minimal 6 karakter.</div>';return}if(p1!==p2){box.innerHTML='<div class="error">Password tidak sama.</div>';return}const token=getRecoveryAccessToken();if(!token){box.innerHTML='<div class="error">Link reset sudah tidak valid. Minta email reset baru.</div>';return}try{const r=await fetch(SUPABASE_URL+"/auth/v1/user",{method:"PUT",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({password:p1})});const j=await r.json();if(!r.ok)throw new Error(j.msg||j.message||"Gagal mengubah password");box.innerHTML='<div class="success">Password berhasil diubah. Silakan masuk dengan password baru.</div>';window.history.replaceState({},document.title,window.location.pathname);setTimeout(hideReset,1200)}catch(e){box.innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
-async function login(){const emailEl=document.getElementById('email'),passwordEl=document.getElementById('password'),msgEl=document.getElementById('authMsg');try{if(!emailEl.value.trim()||!passwordEl.value){msgEl.innerHTML='<div class="error">Email dan password wajib diisi.</div>';return}let r=await fetch(URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value})}),j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'Login gagal');session=j;localStorage.setItem('dagiza_session',JSON.stringify(j));await start()}catch(e){msgEl.innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
+async function login(){
+  const emailEl=document.getElementById('email'),passwordEl=document.getElementById('password'),msgEl=document.getElementById('authMsg');
+  const btn=document.querySelector('#auth button[onclick="login()"]');
+  try{
+    const email=emailEl.value.trim(), password=passwordEl.value;
+    msgEl.innerHTML='';
+    if(!email||!password){msgEl.innerHTML='<div class="error">Email dan password wajib diisi.</div>';return;}
+    if(btn){btn.disabled=true;btn.textContent='Memeriksa...';}
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),15000);
+    const r=await fetch(URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'apikey':KEY,'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({email,password}),
+      signal:controller.signal
+    });
+    clearTimeout(timer);
+    const text=await r.text();
+    let j=null;try{j=text?JSON.parse(text):null}catch(_){}
+    if(!r.ok) throw Error(j?.msg||j?.error_description||j?.message||j?.error||('Login gagal ('+r.status+')'));
+    if(!j?.access_token||!j?.user) throw Error('Login berhasil tetapi sesi tidak diterima. Coba tutup aplikasi lalu buka lagi.');
+    session=j;
+    localStorage.setItem('dagiza_session',JSON.stringify(j));
+    await start();
+  }catch(e){
+    if(e?.name==='AbortError') msgEl.innerHTML='<div class="error">Koneksi ke server terlalu lama. Cek internet lalu coba lagi.</div>';
+    else msgEl.innerHTML='<div class="error">'+esc(e?.message||String(e))+'</div>';
+    console.error('LOGIN ERROR',e);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Masuk';}
+  }
+}
 async function signup(){const emailEl=document.getElementById('email'),passwordEl=document.getElementById('password'),msgEl=document.getElementById('authMsg');try{if(!emailEl.value.trim()||!passwordEl.value){msgEl.innerHTML='<div class="error">Email dan password wajib diisi.</div>';return}let r=await fetch(URL+'/auth/v1/signup',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value})}),j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'Gagal membuat akun');if(j.access_token){session=j;localStorage.setItem('dagiza_session',JSON.stringify(j));await start()}else msgEl.innerHTML='<div class="success">Akun dibuat. Cek email, lalu masuk.</div>'}catch(e){msgEl.innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
 function logout(){localStorage.removeItem('dagiza_session');location.reload()}
 function show(id){
@@ -115,6 +251,24 @@ function show(id){
     b.classList.toggle('active',oc.includes("show('"+id+"')"));
   });
   if(session)load();
+}
+function openQuickMenu(){
+  openModal('Tambah Baru',`
+    <div class="lainnya-panel">
+      <button class="menu-card" type="button" onclick="closeModal();openPOModal()">📋<br><b>PO Baru</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();openProductModal()">👗<br><b>Barang Baru</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();openOrderModal()">🛒<br><b>Order Baru</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();openCustomerModal()">👤<br><b>Customer Baru</b></button>
+    </div>`);
+}
+function openMoreMenu(){
+  openModal('Lainnya',`
+    <div class="lainnya-panel">
+      <button class="menu-card" type="button" onclick="closeModal();show('products')">🛍️<br><b>Barang</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();show('customers')">👤<br><b>Customer</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();show('settings')">⚙️<br><b>Pengaturan</b></button>
+      <button class="menu-card" type="button" onclick="closeModal();show('recap')">📊<br><b>Laporan</b></button>
+    </div>`);
 }
 function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('show')}function closeModal(){modal.classList.remove('show')}
 function openPOModal(){
@@ -653,6 +807,33 @@ function render(){
       <div class="small" style="margin-top:7px">${detail}</div>
     </div>`;
   }).join('')||'<div class="card small">Belum ada order.</div>';
+
+  const totalValue=(D.items||[]).reduce((sum,i)=>{
+    const p=(D.products||[]).find(x=>String(x.uuid||x.id)===String(i.product_id));
+    return sum+(Number(i.quantity||0)*Number(p?.selling_price||0));
+  },0);
+  const pay=document.getElementById('statPayment'); if(pay) pay.textContent='Rp '+fmt(totalValue);
+  const chip=document.getElementById('todayChip'); if(chip) chip.textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const dpo=document.getElementById('dashboardPOList');
+  if(dpo)dpo.innerHTML=D.po.filter(x=>String(x.status||'').toLowerCase()==='open').slice(0,4).map(x=>{
+    const count=D.orders.filter(o=>String(o.po_id)===String(x.id)).length;
+    return `<div class="item"><div class="row"><div><b>${esc(x.name)}</b><br><span class="small">${x.open_date||'-'} – ${x.close_date||'-'} • ${count} pesanan</span></div><span class="pill">Open</span></div></div>`;
+  }).join('')||'<div class="small" style="padding:10px">Belum ada PO aktif.</div>';
+
+  const recap=document.getElementById('recapList');
+  if(recap)recap.innerHTML=D.orders.map(o=>{
+    const c=D.customers.find(x=>String(x.id)===String(o.customer_id));
+    const its=D.items.filter(i=>String(i.order_id)===String(o.id));
+    const total=its.reduce((sum,i)=>{const p=D.products.find(x=>String(x.uuid||x.id)===String(i.product_id));return sum+Number(i.quantity||0)*Number(p?.selling_price||0)},0);
+    return `<div class="invoice-row"><b>${esc(o.order_number||'Order')}</b><br><span class="small">${esc(c?.name||'Customer')} • ${o.order_date||'-'}</span><br><b>Rp${fmt(total)}</b></div>`;
+  }).join('')||'<div class="card small">Belum ada order.</div>';
+
+  const inv=document.getElementById('invoiceList');
+  if(inv)inv.innerHTML=D.orders.map(o=>{
+    const c=D.customers.find(x=>String(x.id)===String(o.customer_id));
+    return `<div class="card"><div class="row"><div><b>${esc(o.order_number||'Order')}</b><br><span class="small">${esc(c?.name||'Customer')} • ${o.order_date||'-'}</span></div><button type="button" class="secondary" onclick="show('orders')">Detail</button></div></div>`;
+  }).join('')||'<div class="card small">Belum ada invoice.</div>';
 }
 async function editOrder(id){
   window.editingOrderId=id;
@@ -770,5 +951,12 @@ async function deleteOrder(id,number){
     console.error(e);
   }
 }
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function fmt(n){return Number(n||0).toLocaleString('id-ID')}async function start(){const authEl=document.getElementById('auth'),appEl=document.getElementById('app'),userEmailEl=document.getElementById('userEmail');authEl.classList.add('hidden');appEl.classList.remove('hidden');if(userEmailEl)userEmailEl.textContent=session?.user?.email||'';await load()}if(isRecovery()&&getRecoveryAccessToken()){document.getElementById("auth").classList.remove("hidden");document.getElementById("app").classList.add("hidden");showReset()}else if(session?.access_token)start();
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}function fmt(n){return Number(n||0).toLocaleString('id-ID')}async function start(){
+  const authEl=document.getElementById('auth'),appEl=document.getElementById('app'),userEmailEl=document.getElementById('userEmail');
+  if(!session?.access_token){authEl.classList.remove('hidden');appEl.classList.add('hidden');return;}
+  authEl.classList.add('hidden');appEl.classList.remove('hidden');
+  if(userEmailEl)userEmailEl.textContent=session?.user?.email||'';
+  try{await load()}catch(e){console.error('START ERROR',e);}
+}
+if(isRecovery()&&getRecoveryAccessToken()){document.getElementById("auth").classList.remove("hidden");document.getElementById("app").classList.add("hidden");showReset()}else if(session?.access_token && session?.user?.id)start();else{session=null;localStorage.removeItem('dagiza_session');}
 </script></body></html>
