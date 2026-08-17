@@ -561,8 +561,7 @@ async function saveOrder(){
       size:oSize.value||'',
       color:oColor.value||'',
       variant_type:oVariant.value||'',
-      quantity:qty,
-      selling_price:p.selling_price
+      quantity:qty
     });
 
     closeModal();
@@ -649,25 +648,99 @@ function render(){
     </div>`;
   }).join('')||'<div class="card small">Belum ada order.</div>';
 }
-function editOrder(id){
+async async function editOrder(id){
+  window.editingOrderId=id;
   const o=D.orders.find(x=>String(x.id)===String(id));
   if(!o){alert('Order tidak ditemukan.');return;}
+  const item=(D.items||[]).find(x=>String(x.order_id)===String(id));
   const opts=(D.customers||[]).map(c=>`<option value="${c.id}" ${String(c.id)===String(o.customer_id)?'selected':''}>${esc(c.name)}${c.whatsapp||c.phone?' — '+esc(c.whatsapp||c.phone):''}</option>`).join('');
+  const poOpts=(D.po||[]).map(x=>`<option value="${x.id}" ${String(x.id)===String(o.po_id)?'selected':''}>${esc(x.name)}</option>`).join('');
+  const productOpts=(D.products||[]).filter(x=>String(x.po_id)===String(o.po_id)).map(x=>`<option value="${x.uuid||x.id}" ${String(x.uuid||x.id)===String(item?.product_id)?'selected':''}>${esc(x.name)} — Rp${fmt(x.selling_price)}</option>`).join('');
+
   openModal('Edit Order',`
     <label>Nomor Order</label><input value="${esc(o.order_number||'')}" disabled>
+    <label>PO</label><select id="editOrderPO" onchange="fillEditOrderProducts()">${poOpts||'<option value="">Belum ada PO</option>'}</select>
     <label>Customer</label><select id="editOrderCustomer">${opts||'<option value="">Belum ada customer</option>'}</select>
-    <label>Tanggal Order</label><input id="editOrderDate" type="date" value="${o.order_date||''}">
+    <label>WhatsApp</label><input id="editOrderWA" readonly value="${esc((D.customers||[]).find(c=>String(c.id)===String(o.customer_id))?.whatsapp || (D.customers||[]).find(c=>String(c.id)===String(o.customer_id))?.phone || '')}">
+    <label>Tanggal order</label><input id="editOrderDate" type="date" value="${o.order_date||''}">
+
+    <label>Barang</label><select id="editOrderProduct" onchange="fillEditOrderOptions()">${productOpts||'<option value="">Belum ada barang di PO ini</option>'}</select>
+
+    <div class="row">
+      <div><label>Ukuran</label><select id="editOrderSize"></select></div>
+      <div><label>Warna</label><select id="editOrderColor"></select></div>
+    </div>
+    <label>Varian / Jenis</label><select id="editOrderVariant"></select>
+
+    <div id="editOrderDetail"></div>
+    <label>Qty</label><input id="editOrderQty" type="number" min="1" value="${Number(item?.quantity||1)}">
+
     <button class="full" type="button" onclick="saveOrderEdit('${id}')">Simpan Perubahan</button>
   `);
+
+  document.getElementById('editOrderCustomer')?.addEventListener('change',()=>{
+    const c=(D.customers||[]).find(x=>String(x.id)===String(document.getElementById('editOrderCustomer').value));
+    document.getElementById('editOrderWA').value=c?.whatsapp||c?.phone||'';
+  });
+  fillEditOrderOptions('${esc(item?.size||'')}','${esc(item?.color||'')}','${esc(item?.variant_type||'')}');
+}
+function fillEditOrderProducts(){
+  const poId=document.getElementById('editOrderPO')?.value;
+  const item=(D.items||[]).find(x=>String(x.order_id)===String(window.editingOrderId));
+  const opts=(D.products||[]).filter(x=>String(x.po_id)===String(poId)).map(x=>`<option value="${x.uuid||x.id}" ${String(x.uuid||x.id)===String(item?.product_id)?'selected':''}>${esc(x.name)} — Rp${fmt(x.selling_price)}</option>`).join('');
+  const el=document.getElementById('editOrderProduct');
+  if(el) el.innerHTML=opts||'<option value="">Belum ada barang di PO ini</option>';
+  fillEditOrderOptions();
+}
+function fillEditOrderOptions(prevSize='',prevColor='',prevVariant=''){
+  const p=(D.products||[]).find(x=>String(x.uuid||x.id)===String(document.getElementById('editOrderProduct')?.value));
+  const set=(id,vals,prev)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const a=multiVals(vals);
+    el.innerHTML=a.length?a.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join(''):'<option value="">-</option>';
+    if(prev && a.includes(prev))el.value=prev;
+  };
+  set('editOrderSize',p?.size,prevSize);
+  set('editOrderColor',p?.color,prevColor);
+  set('editOrderVariant',p?.variant_type,prevVariant);
+  const box=document.getElementById('editOrderDetail');
+  if(box && p) box.innerHTML=`<div class="card"><b>${esc(p.name)}</b><br><span class="small">Ukuran: ${esc(document.getElementById('editOrderSize')?.value||'-')} • Warna: ${esc(document.getElementById('editOrderColor')?.value||'-')} • Varian: ${esc(document.getElementById('editOrderVariant')?.value||'-')}<br>Harga: <b>Rp${fmt(p.selling_price)}</b></span></div>`;
 }
 async function saveOrderEdit(id){
   try{
+    window.editingOrderId=id;
     const customerId=document.getElementById('editOrderCustomer').value;
     if(!customerId)throw Error('Pilih customer terlebih dahulu.');
+    const productId=document.getElementById('editOrderProduct')?.value;
+    const qty=+document.getElementById('editOrderQty')?.value||0;
+    if(!productId)throw Error('Pilih barang terlebih dahulu.');
+    if(qty<1)throw Error('Qty minimal 1.');
+
     await api('orders','PATCH',{
       customer_id:customerId,
+      po_id:document.getElementById('editOrderPO').value,
       order_date:document.getElementById('editOrderDate').value||null
     },'?id=eq.'+encodeURIComponent(id));
+
+    const item=(D.items||[]).find(x=>String(x.order_id)===String(id));
+    const p=(D.products||[]).find(x=>String(x.uuid||x.id)===String(productId));
+    const payload={
+      user_id:session.user.id,
+      order_id:id,
+      product_id:productId,
+      product_name:p?.name||'',
+      size:document.getElementById('editOrderSize')?.value||'',
+      color:document.getElementById('editOrderColor')?.value||'',
+      variant_type:document.getElementById('editOrderVariant')?.value||'',
+      quantity:qty
+    };
+    if(item?.id){
+      await api('order_items','PATCH',payload,'?id=eq.'+encodeURIComponent(item.id));
+    }else{
+      await api('order_items','POST',payload);
+    }
+
     closeModal();
     await load();
     show('orders');
